@@ -15,7 +15,7 @@ class AppManager {
       stream: {
         videoFile: 'stream.mp4',
         isTriggerByBrigther: true,
-        brightnessThreshold: 100,
+        brightnessThreshold: 200,
         minPitch: 0,
         maxPitch: 1000,
         modFreqMin: 10,
@@ -35,8 +35,9 @@ class AppManager {
         modDepthMax: 150,
       },
     };
-    this.videoState = null; // 'trees' | 'stream' | 'city'
-    this.uiState = 'intro'; // 'intro' | 'loading' | 'play'
+    this.videoState = null; // 'trees', 'stream', 'city'
+    this.uiState = 'intro'; // 'intro', 'loading', 'play'
+    this.videoReady = false;
     this.particles = [];
     this.maxParticleCount = 300;
     this.triggerLineX = 0; // Vertical detection line placement
@@ -49,7 +50,6 @@ class AppManager {
   update(video) {
     // draw background and handle video
     if (!video.loadedmetadata) {
-      this.uiState = 'loading';
       this.drawLoadingMessage();
       return;
     }
@@ -64,6 +64,22 @@ class AppManager {
     } else if (!audioContextOn) {
       this.uiState = 'intro';
       this.drawStartMessage();
+    }
+  }
+
+  loadVideoByState(_state) {
+    if (video) {
+      video.stop();
+      video.remove();
+
+      const file = this.config[_state].videoFile;
+      video = createVideo('assets/video/' + file, () => {
+        this.videoReady = true;
+        video.size(VID_WIDTH, VID_HEIGHT);
+        video.loop();
+        video.volume(0);
+      });
+      video.hide();
     }
   }
 
@@ -106,7 +122,7 @@ class AppManager {
         sumBrightness += brightness;
         hitCount++;
         hitYs.push(y); // save hit position
-        if (debugMode) {
+        if (this.debugMode) {
           stroke(255);
           strokeWeight(1);
           fill(0, 0, 0);

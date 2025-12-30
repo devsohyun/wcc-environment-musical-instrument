@@ -28,7 +28,7 @@ let videoIndex = 0;
 function preload() {
   // Initialize App Manager
   appManager = new AppManager();
-  appManager.state = 'intro';
+  appManager.uiState = 'intro';
   // Define video types based on AppManager config
   videoTypes = [
     appManager.config.trees,
@@ -80,7 +80,8 @@ function loadVideoByState(_state) {
     const file = appManager.config[_state].videoFile;
     video = createVideo('assets/video/' + file, () => {
       video.loop();
-    })
+      video.volume(0);
+    });
     video.hide();
   }
 }
@@ -95,15 +96,27 @@ function mousePressed() {
 }
 
 function keyPressed() {
+  console.log(appManager.uiState);
+
   if (key === 'd' || key === 'D') {
     appManager.debugMode = !appManager.debugMode;
   }
   if (key === 'n' || key === 'N') {
-    if (appManager.uiState === 'loading' || appManager.uiState === 'intro') return;
+    // only allow video change when not in intro or loading state
+    if (appManager.uiState === 'loading' || appManager.uiState === 'intro')
+      return;
 
+    // change to next video
     currentVideoIndex = (currentVideoIndex + 1) % VIDEO_STATES.length;
 
+    // update appManager video state and load new video
     appManager.videoState = VIDEO_STATES[currentVideoIndex];
-    loadVideoByState(appManager.videoState);
+    appManager.loadVideoByState(appManager.videoState);
+
+    // reset trigger line position
+    appManager.triggerLineX = 0;
+
+    // clear existing particles
+    appManager.particles = [];
   }
 }
