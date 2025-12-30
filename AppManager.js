@@ -7,10 +7,10 @@ class AppManager {
         brightnessThreshold: 100,
         minPitch: 0,
         maxPitch: 1000,
-        modFreqMin: 10,
-        modFreqMax: 200,
-        modDepthMin: 0,
-        modDepthMax: 300,
+        modFreqMin: 0,
+        modFreqMax: 112,
+        modDepthMin: -150,
+        modDepthMax: 150,
       },
       stream: {
         videoFile: 'stream.mp4',
@@ -20,8 +20,8 @@ class AppManager {
         maxPitch: 1000,
         modFreqMin: 10,
         modFreqMax: 80,
-        modDepthMin: 0,
-        modDepthMax: 300,
+        modDepthMin: -10,
+        modDepthMax: 10,
       },
       city: {
         videoFile: 'city.mp4',
@@ -31,8 +31,8 @@ class AppManager {
         maxPitch: 1000,
         modFreqMin: 10,
         modFreqMax: 150,
-        modDepthMin: 0,
-        modDepthMax: 150,
+        modDepthMin: -300,
+        modDepthMax: 300,
       },
     };
     this.videoState = null; // 'trees', 'stream', 'city'

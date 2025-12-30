@@ -55,16 +55,14 @@ function setup() {
   getAudioContext().suspend();
 
   // Carrier (audible oscillator)
-  carrier = new p5.Oscillator('sine');
+  carrier = new p5.Oscillator('sine'); // Options: 'sine', 'triangle', 'sawtooth', 'square'
   carrier.amp(0);
   carrier.freq(carrierBaseFreq);
-  carrier.start();
 
   // Modulator (FM oscillator)
-  modulator = new p5.Oscillator('sine');
+  modulator = new p5.Oscillator('sawtooth'); // Options: 'sine', 'triangle', 'sawtooth', 'square'
   modulator.disconnect();
   carrier.freq(modulator);
-  modulator.start();
 }
 
 function draw() {
@@ -89,6 +87,8 @@ function loadVideoByState(_state) {
 function mousePressed() {
   if (!audioContextOn && videoLoaded) {
     appManager.uiState = 'play';
+    modulator.start();
+    carrier.start();
     appManager.videoState = VIDEO_STATES[currentVideoIndex];
     audioContextOn = true;
     userStartAudio();
