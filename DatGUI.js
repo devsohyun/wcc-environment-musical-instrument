@@ -5,7 +5,7 @@ class DatGUI {
     const folder = this.gui.addFolder('Instrument Control');
 
     folder.add(_params, 'basePitch', 0, 500, 1);
-    folder.add(_params, 'pitchRange', 50, 1500, 10);
+    folder.add(_params, 'pitchRange', 10, 1500, 10);
 
     folder.add(_params, 'fmAmount', 0, 10, 0.01);
     folder.add(_params, 'fmSpeed', 0, 1, 0.01);

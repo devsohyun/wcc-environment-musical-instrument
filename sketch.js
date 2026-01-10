@@ -9,18 +9,15 @@ const MAX_PARTICLE_COUNT = 300;
 
 const DebugParams = {
   enabled: true,
-
-  basePitch: 180,      // Hz
-  pitchRange: 700,     // Hz
-
-  fmAmount: 0.4,       // 0–1
-  fmSpeed: 0.3,        // 0–1
-
-  smoothness: 0.08     // 0–1
-};         
+  basePitch: 180, // Hz
+  pitchRange: 700, // Hz
+  fmAmount: 0.4, // 0–1
+  fmSpeed: 0.3, // 0–1
+  smoothness: 0.08, // 0–1
+};
 ////////// VARIABLES //////////
 // Video
-let currentVideoIndex = 0;                                                     
+let currentVideoIndex = 0;
 // Audio
 let carrier; // oscillator we will hear
 let modulator; // oscillator will modulate the frequency of the carrier
@@ -41,6 +38,12 @@ let videoIndex = 0;
 
 // UI
 let debugGui;
+
+// Arduino
+let serial;
+let pot1 = 0;
+let pot2 = 0;
+let button = 0;
 
 function preload() {
   // Initialize App Manager
@@ -73,23 +76,15 @@ function setup() {
   //user must start audio context
   getAudioContext().suspend();
 
-  // Carrier (audible oscillator)
-  if (appManager.isSineWave) {
-    carrier = new p5.Oscillator('sine'); 
-  }
-  else {
-    carrier = new p5.Oscillator('sawtooth');
-  }
-  modulator = new p5.Oscillator('triangle');
-  
   // Carrier
-  carrier.amp(0);
+  carrier = new p5.Oscillator(appManager.isSineWave ? 'sine' : 'sawtooth');
   carrier.freq(carrierBaseFreq);
+  carrier.amp(0);
 
-  // Modulator
+  // Modulator (FM)
   modulator = new p5.Oscillator('triangle');
-  modulator.disconnect();       
-  carrier.freq(modulator);        
+  modulator.disconnect(); // don't output sound
+  carrier.freq(modulator); // FM routing
 
   // Low-pass filter to smooth out the sound
   filter = new p5.LowPass();
@@ -97,7 +92,34 @@ function setup() {
   carrier.connect(filter);
 
   filter.freq(2500);
-  filter.res(2); 
+  filter.res(2);
+
+  if (appManager.isArduinoConnected) {
+    //instantiate the serial port object
+    serial = new p5.SerialPort();
+    // Let's list the ports available
+    // let portlist = serial.list();
+
+    // Assuming our Arduino is connected, let's open the connection to it
+    // Change this to the name of your arduino's serial port
+    //open the serial port
+    serial.open('/dev/cu.usbmodem141201');
+    //call the callback option when there is data
+    // When we connect to the underlying server
+    serial.on('connected', serverConnected);
+
+    // When we get a list of serial ports that are available
+    serial.on('list', gotList);
+
+    // When we some data from the serial port
+    serial.on('data', gotData);
+
+    // When or if we get an error
+    serial.on('error', gotError);
+
+    // When our serial port is opened and ready for read/write
+    serial.on('open', gotOpen);
+  }
 }
 
 function draw() {
@@ -119,6 +141,81 @@ function loadVideoByState(_state) {
   }
 }
 
+// ----- SERIAL CALLBACKS ----- //
+// We are connected and ready to go
+function serverConnected() {
+  print('We are connected!');
+}
+
+// Got the list of ports
+function gotList(thelist) {
+  // theList is an array of their names
+  for (let i = 0; i < thelist.length; i++) {
+    // Display in the console
+    print(i + ' ' + thelist[i]);
+  }
+}
+
+// Connected to our serial device
+function gotOpen() {
+  print('Serial Port is open!');
+}
+
+// Ut oh, here is an error, let's log it
+function gotError(theerror) {
+  print(theerror);
+}
+
+// There is data available to work with from the serial port
+function gotData() {
+  let line = serial.readLine();
+  if (!line) return;
+
+  line = trim(line);
+  let values = line.split(',');
+
+  if (values.length !== 3) return;
+
+  pot1 = int(values[0]);
+  pot2 = int(values[1]);
+  button = int(values[2]);
+
+  // ---- BUTTON TOGGLE (edge detection) ----
+  if (button === 1 && lastButton === 0) {
+    appManager.isSineWave = !appManager.isSineWave;
+    // update oscilator type
+    let currentFreq = carrierBaseFreq;
+
+    carrier.stop();
+    carrier.disconnect();
+
+    carrier = new p5.Oscillator(appManager.isSineWave ? 'sine' : 'sawtooth');
+
+    carrier.freq(currentFreq);
+    carrier.amp(0);
+
+    carrier.disconnect();
+    carrier.connect(filter);
+    carrier.start();
+  }
+
+  lastButton = button;
+
+  // ---- POT → SOUND PARAMS ----
+  // Smooth pots (important!)
+  DebugParams.pitchRange = lerp(
+    DebugParams.pitchRange,
+    map(pot1, 0, 1023, 10, 1500),
+    0.15
+  );
+
+  DebugParams.fmAmount = lerp(
+    DebugParams.fmAmount,
+    map(pot2, 0, 1023, 0, 10),
+    0.15
+  );
+}
+
 function mousePressed() {
   if (!audioContextOn && videoLoaded) {
     // change UI state
@@ -134,6 +231,7 @@ function mousePressed() {
   }
 }
 
+// ----- KEYBOARD INTERACTIONS ----- //
 function keyPressed() {
   // Toggle for debug pixels
   if (key === 'd' || key === 'D') {

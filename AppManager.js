@@ -5,34 +5,16 @@ class AppManager {
         videoFile: 'trees.mp4',
         isTriggerByBrigther: false,
         brightnessThreshold: 200,
-        minPitch: 0,
-        maxPitch: 1000,
-        modFreqMin: 0,
-        modFreqMax: 112,
-        modDepthMin: -150,
-        modDepthMax: 150,
       },
       stream: {
         videoFile: 'stream.mp4',
         isTriggerByBrigther: true,
-        brightnessThreshold: 200,
-        minPitch: 0,
-        maxPitch: 1000,
-        modFreqMin: 10,
-        modFreqMax: 80,
-        modDepthMin: -10,
-        modDepthMax: 10,
+        brightnessThreshold: 245,
       },
       city: {
         videoFile: 'city.mp4',
         isTriggerByBrigther: false,
-        brightnessThreshold: 200,
-        minPitch: 0,
-        maxPitch: 1000,
-        modFreqMin: 10,
-        modFreqMax: 150,
-        modDepthMin: -300,
-        modDepthMax: 300,
+        brightnessThreshold: 50,
       },
     };
     this.videoState = null; // 'trees', 'stream', 'city'
@@ -41,8 +23,9 @@ class AppManager {
     this.particles = [];
     this.maxParticleCount = 300;
     this.triggerLineX = 0; // Vertical detection line placement
-    this.isSineWave = false; // Toggle for carrier waveform
+    this.isSineWave = true; // Toggle for carrier waveform
     this.debugMode = false; // Debug to see which pixels are triggering
+    this.isArduinoConnected = true; // Arduino connection status
   }
 
   currentConfig() {
