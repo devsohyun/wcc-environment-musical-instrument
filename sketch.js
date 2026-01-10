@@ -7,23 +7,40 @@ const VIDEO_STATES = ['trees', 'stream', 'city'];
 const TRIGGER_LINE_SPEED = 3;
 const MAX_PARTICLE_COUNT = 300;
 
+const DebugParams = {
+  enabled: true,
+
+  basePitch: 180,      // Hz
+  pitchRange: 700,     // Hz
+
+  fmAmount: 0.4,       // 0–1
+  fmSpeed: 0.3,        // 0–1
+
+  smoothness: 0.08     // 0–1
+};         
 ////////// VARIABLES //////////
 // Video
-let currentVideoIndex = 0;
+let currentVideoIndex = 0;                                                     
 // Audio
 let carrier; // oscillator we will hear
 let modulator; // oscillator will modulate the frequency of the carrier
+let fmGain; // proper FM depth control
+let filter; //low-pass filter
 let carrierBaseFreq = 220;
 let audioContextOn = false;
 
 // Managers
 let appManager;
+
 // Video
 let video;
 let videoTypes;
 let videoSource;
 let videoLoaded = false;
 let videoIndex = 0;
+
+// UI
+let debugGui;
 
 function preload() {
   // Initialize App Manager
@@ -51,18 +68,36 @@ function setup() {
   noStroke();
   textAlign(CENTER);
 
+  debugGui = new DatGUI(DebugParams);
+
   //user must start audio context
   getAudioContext().suspend();
 
   // Carrier (audible oscillator)
-  carrier = new p5.Oscillator('sine'); // Options: 'sine', 'triangle', 'sawtooth', 'square'
+  if (appManager.isSineWave) {
+    carrier = new p5.Oscillator('sine'); 
+  }
+  else {
+    carrier = new p5.Oscillator('sawtooth');
+  }
+  modulator = new p5.Oscillator('triangle');
+  
+  // Carrier
   carrier.amp(0);
   carrier.freq(carrierBaseFreq);
 
-  // Modulator (FM oscillator)
-  modulator = new p5.Oscillator('sawtooth'); // Options: 'sine', 'triangle', 'sawtooth', 'square'
-  modulator.disconnect();
-  carrier.freq(modulator);
+  // Modulator
+  modulator = new p5.Oscillator('triangle');
+  modulator.disconnect();       
+  carrier.freq(modulator);        
+
+  // Low-pass filter to smooth out the sound
+  filter = new p5.LowPass();
+  carrier.disconnect();
+  carrier.connect(filter);
+
+  filter.freq(2500);
+  filter.res(2); 
 }
 
 function draw() {
@@ -86,21 +121,32 @@ function loadVideoByState(_state) {
 
 function mousePressed() {
   if (!audioContextOn && videoLoaded) {
+    // change UI state
     appManager.uiState = 'play';
+    // start audio
     modulator.start();
     carrier.start();
+    // load initial video
     appManager.videoState = VIDEO_STATES[currentVideoIndex];
+    // audio on
     audioContextOn = true;
     userStartAudio();
   }
 }
 
 function keyPressed() {
-  console.log(appManager.uiState);
-
+  // Toggle for debug pixels
   if (key === 'd' || key === 'D') {
     appManager.debugMode = !appManager.debugMode;
   }
+
+  // Toggle for debug GUI to change audio params
+  if (key === 'g' || key === 'G') {
+    DebugParams.enabled = !DebugParams.enabled;
+    debugGui.toggle();
+  }
+
+  // Change to next video
   if (key === 'n' || key === 'N') {
     // only allow video change when not in intro or loading state
     if (appManager.uiState === 'loading' || appManager.uiState === 'intro')

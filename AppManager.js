@@ -4,7 +4,7 @@ class AppManager {
       trees: {
         videoFile: 'trees.mp4',
         isTriggerByBrigther: false,
-        brightnessThreshold: 100,
+        brightnessThreshold: 200,
         minPitch: 0,
         maxPitch: 1000,
         modFreqMin: 0,
@@ -26,7 +26,7 @@ class AppManager {
       city: {
         videoFile: 'city.mp4',
         isTriggerByBrigther: false,
-        brightnessThreshold: 100,
+        brightnessThreshold: 200,
         minPitch: 0,
         maxPitch: 1000,
         modFreqMin: 10,
@@ -41,25 +41,26 @@ class AppManager {
     this.particles = [];
     this.maxParticleCount = 300;
     this.triggerLineX = 0; // Vertical detection line placement
+    this.isSineWave = false; // Toggle for carrier waveform
     this.debugMode = false; // Debug to see which pixels are triggering
   }
 
   currentConfig() {
     return this.config[this.videoState];
   }
-  update(video) {
+  update(_video) {
     // draw background and handle video
-    if (!video.loadedmetadata) {
+    if (!_video.loadedmetadata) {
       this.drawLoadingMessage();
       return;
     }
 
-    image(video, 0, 0, VID_WIDTH, VID_HEIGHT);
+    image(_video, 0, 0, VID_WIDTH, VID_HEIGHT);
 
     if (audioContextOn && this.uiState !== 'intro') {
       this.drawTriggerLine();
       this.moveTriggerLine();
-      this.detectVideoFM(video);
+      this.detectVideoFM(_video);
       this.updateAndDrawParticles();
     } else if (!audioContextOn) {
       this.uiState = 'intro';
@@ -95,8 +96,8 @@ class AppManager {
     if (this.triggerLineX > width) this.triggerLineX = 0;
   }
 
-  detectVideoFM(video) {
-    video.loadPixels();
+  detectVideoFM(_video) {
+    _video.loadPixels();
 
     let sumY = 0;
     let sumBrightness = 0;
@@ -104,12 +105,12 @@ class AppManager {
     let hitYs = []; // store all hit positions for random particle selection
 
     // Map trigger line from canvas -> video pixel coordinates
-    const x = Math.floor(map(this.triggerLineX, 0, width, 0, video.width));
+    const x = Math.floor(map(this.triggerLineX, 0, width, 0, _video.width));
 
-    for (let y = 0; y < video.height; y += PIXEL_JUMP) {
-      const index = (y * video.width + x) * 4;
-      const r = video.pixels[index];
-      const g = video.pixels[index + 1];
+    for (let y = 0; y < _video.height; y += PIXEL_JUMP) {
+      const index = (y * _video.width + x) * 4;
+      const r = _video.pixels[index];
+      const g = _video.pixels[index + 1];
       const b = video.pixels[index + 2];
       const brightness = (r + g + b) / 3;
 
@@ -121,80 +122,100 @@ class AppManager {
         sumY += y;
         sumBrightness += brightness;
         hitCount++;
-        hitYs.push(y); // save hit position
+        hitYs.push(y);
+
         if (this.debugMode) {
-          stroke(255);
-          strokeWeight(1);
-          fill(0, 0, 0);
-          circle(x, y, PIXEL_JUMP * 2); // Visual feedback on hits
+          fill(255);
+          circle(x, y, 4);
         }
       }
     }
 
     if (hitCount > 0) {
-      const avgY = sumY / hitCount;
-      const avgBrightness = sumBrightness / hitCount;
-
-      // Update audio based on average brightness/position
-      this.applyFM(avgY, avgBrightness);
-
-      // Randomly select a few hits to generate particles
       const MAX_PARTICLES_PER_FRAME = 5;
+
+      this.applyFM(sumY / hitCount, sumBrightness / hitCount, hitCount);
+
       for (let i = 0; i < MAX_PARTICLES_PER_FRAME; i++) {
         if (
           hitYs.length === 0 ||
           this.particles.length >= this.maxParticleCount
         )
           break;
-        const randIndex = Math.floor(random(hitYs.length));
+
+        const randIndex = floor(random(hitYs.length));
         const yPos = hitYs[randIndex];
+
         this.particles.push({
-          x: map(x, 0, video.width, 0, width),
-          y: map(yPos, 0, video.height, 0, height),
+          x: map(x, 0, _video.width, 0, width),
+          y: map(yPos, 0, _video.height, 0, height),
           size: random(4, 8),
           opacity: 255,
         });
-        hitYs.splice(randIndex, 1); // remove so we don’t pick it again
+
+        hitYs.splice(randIndex, 1);
       }
     } else {
-      // No hit: fade audio out
-      carrier.amp(0, 0.2);
-      modulator.amp(0);
+      carrier.amp(0, 0.3);
+      modulator.amp(0, 0.3);
     }
   }
 
-  applyFM(avgY, avgBrightness) {
-    // Base pitch (gesture)
-    const targetFreq = map(
-      avgY,
-      0,
-      VID_HEIGHT,
-      this.currentConfig().maxPitch,
-      this.currentConfig().minPitch
-    );
-    carrierBaseFreq = lerp(carrierBaseFreq, targetFreq, 0.08);
+  applyFM(avgY, avgBrightness, hitCount) {
+    // Normalised brightness
+    let normBrightness;
 
-    // FM speed
-    const modFreq = map(
-      avgY,
-      0,
-      VID_HEIGHT,
-      this.currentConfig().modFreqMin,
-      this.currentConfig().modFreqMax
+    if (this.currentConfig().isTriggerByBrigther) {
+      // Bright pixels → higher value
+      normBrightness = map(
+        avgBrightness,
+        this.currentConfig().brightnessThreshold,
+        255,
+        0,
+        1
+      );
+    } else {
+      // Dark pixels → higher value
+      normBrightness = map(
+        avgBrightness,
+        0,
+        this.currentConfig().brightnessThreshold,
+        1,
+        0
+      );
+    }
+
+    normBrightness = constrain(normBrightness, 0, 1);
+    normBrightness = pow(normBrightness, 2.2);
+
+    // Pitch mapping
+    const minPitch = DebugParams.basePitch;
+    const maxPitch = DebugParams.basePitch + DebugParams.pitchRange;
+
+    const targetFreq = map(avgY, 0, VID_HEIGHT, maxPitch, minPitch);
+    carrierBaseFreq = lerp(carrierBaseFreq, targetFreq, DebugParams.smoothness);
+
+    carrier.freq(carrierBaseFreq);
+
+    // FM modulator frequency (slow + musical)
+    const modFreq = lerp(
+      modulator.freq().value,
+      map(hitCount, 0, 60, 0.2, lerp(5, 35, DebugParams.fmSpeed)),
+      0.1
     );
 
-    // FM depth (energy)
-    const modDepth = map(
-      avgBrightness,
-      this.currentConfig().brightnessThreshold,
-      255,
-      this.currentConfig().modDepthMin,
-      this.currentConfig().modDepthMax
-    );
+    modulator.freq(constrain(modFreq, 0.1, 40));
 
-    modulator.freq(modFreq);
-    modulator.amp(modDepth);
-    carrier.amp(0.25, 0.1);
+    // ✅ FIX: FM depth via modulator.amp (NO fmGain)
+    const fmDepth = normBrightness * DebugParams.fmAmount * 80; // keep this small
+
+    modulator.amp(constrain(fmDepth, 0, 120), 0.15);
+
+    // Output amplitude
+    carrier.amp(constrain(hitCount / 40, 0.05, 0.25), 0.2);
+
+    // Filter brightness → timbre
+    filter.freq(lerp(800, 3200, normBrightness), 0.2);
   }
 
   updateAndDrawParticles() {
