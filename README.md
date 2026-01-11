@@ -20,9 +20,10 @@ This libraries are installed via cdn.
 
 #### Download videos
 
-Download source videos from [Dropbox](https://www.dropbox.com/scl/fo/zuq1la161k5uyq61q8f56/AOQcG_rdx9V7Uw6vTaStHcw?rlkey=7etboxxlygx1lvki6wkzvnfxq&st=cn13i5hc&dl=0) and place them in directory.
+Download source videos from [Dropbox](https://www.dropbox.com/scl/fo/zuq1la161k5uyq61q8f56/AOQcG_rdx9V7Uw6vTaStHcw?rlkey=7etboxxlygx1lvki6wkzvnfxq&st=cn13i5hc&dl=0). <br>
+Then create directory and place the videos in it.
 ```
-assets/videos/
+assets/video/
 ```
 
 #### Arduino Serial
