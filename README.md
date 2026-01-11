@@ -1,10 +1,12 @@
 # Environment Musical Instrument
 
-Goldsmiths Computational Arts Workshop for Creative Coding Term 1 final asssessment.
+MA Computational Arts at Goldsmiths University of London Workshop for Creative Coding project for Term 1 final asssessment.
 
 ## Description
 
-An in-depth paragraph about your project and overview of use.
+This project explores how environmental video data can be translated into sound to reveal the often-overlooked sonic relationships between human, non-human, and urban environments through interactive audiovisual synthesis.
+
+Watch project video at [Vimeo](https://vimeo.com/1153339333?fl=pl&fe=sh)
 
 ## Getting Started
 
