@@ -1,8 +1,8 @@
-////////// CONSTANTS //////////
+// ----- CONSTANTS ----- //
 const VID_WIDTH = 1920 * 0.8;
 const VID_HEIGHT = 1080 * 0.8;
 const PIXEL_JUMP = 4; // defines how many pixels to skip
-const VIDEO_STATES = ['trees', 'stream', 'city'];
+const VIDEO_STATES = ['trees', 'stream', 'grass', 'city', 'park_trees'];
 
 const TRIGGER_LINE_SPEED = 3;
 const MAX_PARTICLE_COUNT = 300;
@@ -15,7 +15,7 @@ const DebugParams = {
   fmSpeed: 0.3, // 0–1
   smoothness: 0.08, // 0–1
 };
-////////// VARIABLES //////////
+// ----- VARIABLES ----- //
 // Video
 let currentVideoIndex = 0;
 // Audio
@@ -25,20 +25,16 @@ let fmGain; // proper FM depth control
 let filter; //low-pass filter
 let carrierBaseFreq = 220;
 let audioContextOn = false;
-
-// Managers
+// Manager
 let appManager;
-
 // Video
 let video;
 let videoTypes;
 let videoSource;
 let videoLoaded = false;
 let videoIndex = 0;
-
 // UI
 let debugGui;
-
 // Arduino
 let serial;
 let pot1 = 0;
@@ -67,7 +63,7 @@ function preload() {
 }
 
 function setup() {
-  createCanvas(VID_WIDTH, VID_HEIGHT);
+  createCanvas(windowWidth, windowHeight);
   noStroke();
   textAlign(CENTER);
 
@@ -97,27 +93,13 @@ function setup() {
   if (appManager.isArduinoConnected) {
     //instantiate the serial port object
     serial = new p5.SerialPort();
-    // Let's list the ports available
-    // let portlist = serial.list();
 
-    // Assuming our Arduino is connected, let's open the connection to it
-    // Change this to the name of your arduino's serial port
-    //open the serial port
-    serial.open('/dev/cu.usbmodem141201');
-    //call the callback option when there is data
-    // When we connect to the underlying server
+    // Open the serial port
+    serial.open('/dev/cu.usbmodem141201'); // change this to the name of your arduino's serial port
     serial.on('connected', serverConnected);
-
-    // When we get a list of serial ports that are available
     serial.on('list', gotList);
-
-    // When we some data from the serial port
     serial.on('data', gotData);
-
-    // When or if we get an error
     serial.on('error', gotError);
-
-    // When our serial port is opened and ready for read/write
     serial.on('open', gotOpen);
   }
 }
@@ -128,10 +110,11 @@ function draw() {
 }
 
 function loadVideoByState(_state) {
+  // stop and remove existing video
   if (video) {
     video.stop();
     video.remove();
-
+    // load new video based on state
     const file = appManager.config[_state].videoFile;
     video = createVideo('assets/video/' + file, () => {
       video.loop();
@@ -142,6 +125,7 @@ function loadVideoByState(_state) {
 }
 
 // ----- SERIAL CALLBACKS ----- //
+// Code copied and adapted from https://github.com/p5-serial/p5.serialport/tree/main
 // We are connected and ready to go
 function serverConnected() {
   print('We are connected!');
@@ -201,7 +185,7 @@ function gotData() {
 
   lastButton = button;
 
-  // ---- POT → SOUND PARAMS ----
+  // Potentiometer mappings
   // Smooth pots (important!)
   DebugParams.pitchRange = lerp(
     DebugParams.pitchRange,
@@ -216,6 +200,7 @@ function gotData() {
   );
 }
 
+// ----- MOUSE INTERACTIONS ----- //
 function mousePressed() {
   if (!audioContextOn && videoLoaded) {
     // change UI state
@@ -263,4 +248,19 @@ function keyPressed() {
     // clear existing particles
     appManager.particles = [];
   }
+
+  //toggle fullscreen on or off
+  if (key == 'f' || key == 'F') {
+    //get current full screen state https://p5js.org/reference/#/p5/fullscreen
+    appManager.drawVideoCover(video);
+    let fs = fullscreen(); //true or false
+
+    //switch it to the opposite of current value
+    console.log('Full screen getting set to: ' + !fs);
+    fullscreen(!fs);
+  }
+}
+
+function windowResized() {
+  resizeCanvas(windowWidth, windowHeight);
 }
