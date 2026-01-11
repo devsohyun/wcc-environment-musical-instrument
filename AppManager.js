@@ -36,7 +36,7 @@ class AppManager {
     this.triggerLineX = 0; // vertical detection line placement
     this.isSineWave = true; // toggle for carrier waveform
     this.debugMode = false; // debug to see which pixels are triggering
-    this.isArduinoConnected = true; // arduino connection status
+    this.isArduinoConnected = false; // arduino connection status
   }
 
   currentConfig() {
