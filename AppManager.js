@@ -22,8 +22,8 @@ class AppManager {
         isTriggerByBrigther: false,
         brightnessThreshold: 100,
       },
-      park_trees: {
-        videoFile: 'park_trees.mp4',
+      park: {
+        videoFile: 'park.mp4',
         isTriggerByBrigther: false,
         brightnessThreshold: 100,
       },

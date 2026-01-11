@@ -2,7 +2,7 @@
 const VID_WIDTH = 1920 * 0.8;
 const VID_HEIGHT = 1080 * 0.8;
 const PIXEL_JUMP = 4; // defines how many pixels to skip
-const VIDEO_STATES = ['trees', 'stream', 'grass', 'city', 'park_trees'];
+const VIDEO_STATES = ['trees', 'stream', 'grass', 'city', 'park'];
 
 const TRIGGER_LINE_SPEED = 3;
 const MAX_PARTICLE_COUNT = 300;
