@@ -15,6 +15,7 @@ const DebugParams = {
   fmSpeed: 0.3, // 0–1
   smoothness: 0.08, // 0–1
 };
+
 // ----- VARIABLES ----- //
 // Video
 let currentVideoIndex = 0;
@@ -39,7 +40,10 @@ let debugGui;
 let serial;
 let pot1 = 0;
 let pot2 = 0;
-let button = 0;
+let button1 = 0;
+let button2 = 0;
+let button1LastStatus = 0;
+let button2LastStatus = 0;
 
 function preload() {
   // Initialize App Manager
@@ -95,7 +99,7 @@ function setup() {
     serial = new p5.SerialPort();
 
     // Open the serial port
-    serial.open('/dev/cu.usbmodem141201'); // change this to the name of your arduino's serial port
+    serial.open('/dev/cu.usbmodem141201'); // IMPORTANT!: change this to the name of your arduino's serial port
     serial.on('connected', serverConnected);
     serial.on('list', gotList);
     serial.on('data', gotData);
@@ -162,10 +166,11 @@ function gotData() {
 
   pot1 = int(values[0]);
   pot2 = int(values[1]);
-  button = int(values[2]);
+  pot3 = int(values[2]);
+  button = int(values[3]);
 
   // ---- BUTTON TOGGLE (edge detection) ----
-  if (button === 1 && lastButton === 0) {
+  if (button1 === 1 && button1LastStatus === 0) {
     appManager.isSineWave = !appManager.isSineWave;
     // update oscilator type
     let currentFreq = carrierBaseFreq;
@@ -183,21 +188,47 @@ function gotData() {
     carrier.start();
   }
 
-  lastButton = button;
+  button1LastStatus = button1;
+
+  if (button2 === 1 && button2LastStatus === 0) {
+    nextVideo();
+  }
 
   // Potentiometer mappings
-  // Smooth pots (important!)
-  DebugParams.pitchRange = lerp(
+  // Smooth pots
+  let pitchTarget = lerp(
     DebugParams.pitchRange,
     map(pot1, 0, 1023, 10, 1500),
-    0.15
+    0.1,
   );
+  DebugParams.pitchRange = Math.round(pitchTarget);
 
-  DebugParams.fmAmount = lerp(
-    DebugParams.fmAmount,
-    map(pot2, 0, 1023, 0, 10),
-    0.15
+  // fmAmount: keep 2 decimal places
+  let fmTarget = lerp(DebugParams.fmAmount, map(pot2, 0, 1023, 0, 10), 0.15);
+  DebugParams.fmAmount = Math.round(fmTarget * 100) / 100;
+
+  // smoothness: keep 2 decimal places
+  let smoothTarget = lerp(
+    DebugParams.smoothness,
+    map(pot3, 0, 1023, 0, 2),
+    0.15,
   );
+  DebugParams.smoothness = Math.round(smoothTarget * 100) / 100;
+}
+
+function nextVideo() {
+  // only allow video change when not in intro or loading state
+  if (appManager.uiState === 'loading' || appManager.uiState === 'intro')
+    return;
+  // change to next video
+  currentVideoIndex = (currentVideoIndex + 1) % VIDEO_STATES.length;
+  // update appManager video state and load new video
+  appManager.videoState = VIDEO_STATES[currentVideoIndex];
+  appManager.loadVideoByState(appManager.videoState);
+  // reset trigger line position
+  appManager.triggerLineX = 0;
+  // clear existing particles
+  appManager.particles = [];
 }
 
 // ----- MOUSE INTERACTIONS ----- //
@@ -231,22 +262,7 @@ function keyPressed() {
 
   // Change to next video
   if (key === 'n' || key === 'N') {
-    // only allow video change when not in intro or loading state
-    if (appManager.uiState === 'loading' || appManager.uiState === 'intro')
-      return;
-
-    // change to next video
-    currentVideoIndex = (currentVideoIndex + 1) % VIDEO_STATES.length;
-
-    // update appManager video state and load new video
-    appManager.videoState = VIDEO_STATES[currentVideoIndex];
-    appManager.loadVideoByState(appManager.videoState);
-
-    // reset trigger line position
-    appManager.triggerLineX = 0;
-
-    // clear existing particles
-    appManager.particles = [];
+    nextVideo();
   }
 
   //toggle fullscreen on or off

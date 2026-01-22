@@ -27,8 +27,13 @@ class AppManager {
         isTriggerByBrigther: false,
         brightnessThreshold: 100,
       },
+      houses: {
+        videoFile: 'houses.mp4',
+        isTriggerByBrigther: true,
+        brightnessThreshold: 100,
+      },
     };
-    this.videoState = null; // 'trees', 'stream', 'city'
+    this.videoState = null; // 'trees', 'stream', 'grass', 'city', 'park', 'houses'
     this.uiState = 'intro'; // 'intro', 'loading', 'play'
     this.videoReady = false;
     this.particles = [];
