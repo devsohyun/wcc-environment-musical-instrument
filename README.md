@@ -1,6 +1,6 @@
-# Environment Musical Instrument
+# Sonic Soundscape
 
-MA Computational Arts at Goldsmiths University of London Workshop for Creative Coding project for Term 1 final asssessment.
+P5.js project exploring sonic sounds in different environments. This project was developed during Workshop for Creative Coding module within the MA Computational Arts programme at Goldsmiths University of London.
 
 ## Description
 
@@ -31,11 +31,13 @@ assets/video/
 #### Arduino Serial
 
 The project is set to not using Arduino data as default.<br> 
-But if you have Arduino hardware connection, you need a nodejs server to communicate between p5js and arduino serial. To do this, follow as described below:
+But if you have Arduino hardware connection, you need to run the nodejs server to communicate between p5js and arduino serial. To do this, follow as described below:
 1. Set <code>this.isArduinoConnected = true</code> in AppManager.js
-2. Download p5.serialport by cloning this [repository](https://github.com/p5-serial/p5.serialserver).
+2. Go to node server directory in your terminal <code>cd server/</code>
 3. Install the dependencies with the command <code>npm install</code>.
 4. Start the server with the command <code>node startserver.js</code>.
+
+The server code is from [p5-serial](https://github.com/p5-serial/p5.serialserver).
 
 ### Executing program
 
@@ -46,9 +48,17 @@ Control the app by pressing keys below.
 - n: Next video
 - g: Gui panel open/close toggle
 
+## Installation
+
+
+
 ## Help
 
-When you use Arduino and getting data through serial, make sure to close serial print console from IDE
+When you use Arduino and getting data through serial, make sure to close serial print console from IDE.
+
+### Known Issues
+
+If you connect Arduino, sometimes turning potentiometers too fast will cause a crash. In this case, refresh the browser.
 
 ## Acknowledgments
 
