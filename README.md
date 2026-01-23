@@ -50,7 +50,18 @@ Control the app by pressing keys below.
 
 ## Installation
 
+Connect sensors to Arduino.<br>
+3 Potentiometers, 2 buttons.<br>
+Check Arduino [code](https://github.com/devsohyun/wcc-environment-musical-instrument/blob/main/sensors/send_data.ino) for the connection.
 
+Then, connecct the Arduino to your computer, run the code, see if it's sending data on your browser.
+
+<img width="883" height="679" alt="image" src="https://github.com/user-attachments/assets/56af01e0-28a5-4810-872c-3816e6cb4865" />
+
+
+### Photo from installation
+
+<img width="692" height="736" alt="image" src="https://github.com/user-attachments/assets/fc5b67ec-6e38-4f49-94a0-06e376f8be8f" />
 
 ## Help
 
@@ -58,7 +69,7 @@ When you use Arduino and getting data through serial, make sure to close serial 
 
 ### Known Issues
 
-If you connect Arduino, sometimes turning potentiometers too fast will cause a crash. In this case, refresh the browser.
+If you connect Arduino, sometimes turning potentiometers too fast in a same time will cause a crash. In this case, refresh the browser.
 
 ## Acknowledgments
 
